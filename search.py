@@ -1,6 +1,8 @@
 from re import search, compile, purge, Pattern
-from string import punctuation, ascii_lowercase
+from string import punctuation, ascii_lowercase, digits
 from unicodedata import name
+
+special_caracteres = punctuation+digits
 
 class Find:
 
@@ -32,7 +34,7 @@ class Find:
             except ValueError:
                 # Ignorer les caractères qui n'ont pas de nom Unicode
                 pass
-        return variantes + [i for i in punctuation]
+        return variantes + [i for i in special_caracteres]
 
 
     def __recherche_regex(self, mot: str) -> Pattern:
@@ -42,7 +44,7 @@ class Find:
         for i in mot:
             correspondances.append(self.__alphabet_avec_variantes[i])
 
-        pattern = r''.join([f"[{''.join(sous_liste)}]+[{punctuation}]*" for sous_liste in correspondances])
+        pattern = r''.join([f"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances])
 
         return compile(pattern)
 
