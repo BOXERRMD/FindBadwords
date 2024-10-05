@@ -1,6 +1,7 @@
 from re import search, compile, purge, Pattern
 from string import punctuation, ascii_lowercase, digits
 from unicodedata import name
+from immutableType import Str_, Int_, StrError
 
 special_caracteres = punctuation+digits
 
@@ -19,6 +20,11 @@ class Find:
 
 
     def __trouver_variantes_de_lettre(self, base_char: str) -> list:
+        """
+        Trouves des variantes d'une lettre et ajoute la ponctuation et les caractères digitales
+        :param base_char:
+        :return:
+        """
         variantes = []
         for codepoint in range(0x110000):  # Limite de l'espace Unicode
             char = chr(codepoint)
@@ -38,7 +44,11 @@ class Find:
 
 
     def __recherche_regex(self, mot: str) -> Pattern:
-
+        """
+        Crée le patter correspondant au mot recherché
+        :param mot: le mot recherché
+        :return: un modèle regex
+        """
         correspondances = []
 
         for i in mot:
@@ -48,18 +58,46 @@ class Find:
 
         return compile(pattern)
 
+    def __check_types(self, arg) -> Str_:
+        """
+        Regarde si l'argument est un str ou non (les booléens sont considéré comme des châines de caractère
+        :param arg: l'argument
+        :return: Str_ type immuable
+        :raise: StrError si l'argument n'est pas une châine de caractère
+        """
+        try:
+
+            int(arg)
+
+        except:
+            return Str_(str(arg))
+
+        raise StrError(arg)
+
+
 
     def find_Badwords(self, word: str, sentence: str) -> bool:
         """
         Search any configuration of word in the sentence
-        :param word: a simple word write in LATIN
+        :param word: a simple word write in LATIN (not string digit)
         :param sentence: the sentence who the word is find (or not)
         :return: ``True`` if the word is find, else ``False``
         """
 
-        regex = self.__recherche_regex(word)
+        wordStr = self.__check_types(word)
+        sentenceStr = Str_(sentence)
 
-        result = search(regex, sentence.replace(' ', ''))
+        regex = self.__recherche_regex(wordStr.str_)
+
+        result = search(regex, sentenceStr.str_.replace(' ', ''))
+
+        x = 0
+        for i in result.group():
+            if i in special_caracteres:
+                x += 1
+
+        if len(result.group()) == x:
+            return False
 
         if result is not None:
             purge()
