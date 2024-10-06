@@ -76,11 +76,12 @@ class Find:
 
 
 
-    def find_Badwords(self, word: str, sentence: str) -> bool:
+    def find_Badwords(self, word: str, sentence: str, advanced: bool = True) -> bool:
         """
         Search any configuration of word in the sentence
-        :param word: a simple word write in LATIN (not string digit)
+        :param word: a simple word write in LATIN (not string digit) EX : ``ass`` not ``a*s``
         :param sentence: the sentence who the word is find (or not)
+        :param advanced: Allow space and \\n replaced by ''
         :return: ``True`` if the word is find, else ``False``
         """
 
@@ -89,7 +90,14 @@ class Find:
 
         regex = self.__recherche_regex(wordStr.str_)
 
-        result = search(regex, sentenceStr.str_.replace(' ', ''))
+        if advanced:
+            sentenceStr.str_.replace(' ', '').replace('\n', '')
+
+        result = search(regex, sentenceStr.str_)
+
+        if result is None:
+            purge()
+            return False
 
         x = 0
         for i in result.group():
@@ -102,6 +110,3 @@ class Find:
         if result is not None:
             purge()
             return True
-
-        purge()
-        return False
