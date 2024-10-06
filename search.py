@@ -1,7 +1,7 @@
 from re import search, compile, purge, Pattern
 from string import punctuation, ascii_lowercase, digits
 from unicodedata import name
-from immutableType import Str_, Int_, StrError
+from immutableType import Str_, StrError
 
 special_caracteres = punctuation+digits
 
@@ -91,7 +91,8 @@ class Find:
         regex = self.__recherche_regex(wordStr.str_)
 
         if advanced:
-            sentenceStr.str_.replace(' ', '').replace('\n', '')
+            u = sentenceStr.str_.replace(' ', '').split('\n')
+            sentenceStr.str_ = ''.join(u)
 
         result = search(regex, sentenceStr.str_)
 
