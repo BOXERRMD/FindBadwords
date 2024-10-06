@@ -54,7 +54,7 @@ class Find:
         for i in mot:
             correspondances.append(self.__alphabet_avec_variantes[i])
 
-        pattern = r''.join([f"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances])
+        pattern = r'\b' + r''.join([rf"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances]) + r'\b'
 
         return compile(pattern)
 
