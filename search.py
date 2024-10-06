@@ -1,7 +1,7 @@
 from re import search, compile, purge, Pattern
 from string import punctuation, ascii_lowercase, digits
 from unicodedata import name
-from immutableType import Str_, StrError
+from immutableType import Str_, Bool_, StrError
 
 special_caracteres = punctuation+digits
 
@@ -75,6 +75,31 @@ class Find:
         raise StrError(arg)
 
 
+    def __find_all_iteration(self, word: str, sentence: str, regex: Pattern):
+        """
+        Concatène chaque mot un à un pour vérifier le match
+        :param word:
+        :param sentence:
+        :param regex:
+        :return:
+        """
+
+        if sentence == '':
+            return None # Retourner None si le mot n'est pas trouvé dans la phrase entière
+
+        words = sentence.split()  # Diviser la phrase en mots
+        current_concatenation = ""
+
+        for i in range(len(words)):
+            current_concatenation += words[i]  # Ajouter le mot actuel à la concaténation
+            result = search(regex, current_concatenation)
+            if result is not None:
+                return result  # Retourner True si le mot est trouvé dans la concaténation actuelle
+
+        self.__find_all_iteration(word, ' '.join(words[1:]), regex)
+
+
+
 
     def find_Badwords(self, word: str, sentence: str, advanced: bool = True) -> bool:
         """
@@ -87,14 +112,16 @@ class Find:
 
         wordStr = self.__check_types(word)
         sentenceStr = Str_(sentence)
+        advancedBool = Bool_(advanced)
 
         regex = self.__recherche_regex(wordStr.str_)
 
-        if advanced:
-            u = sentenceStr.str_.replace(' ', '').split('\n')
-            sentenceStr.str_ = ''.join(u)
+        if advancedBool:
+            u = sentenceStr.str_.split('\n')
+            sentenceStr.str_ = ' '.join(u)
 
-        result = search(regex, sentenceStr.str_)
+        result = self.__find_all_iteration(wordStr.str_, sentenceStr.str_, regex)
+        #result = search(regex, sentenceStr.str_)
 
         if result is None:
             purge()
