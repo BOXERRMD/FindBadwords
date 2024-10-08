@@ -92,11 +92,13 @@ class Find:
 
         for i in range(len(words)):
             current_concatenation += words[i]  # Ajouter le mot actuel à la concaténation
-            result = search(regex, current_concatenation)
-            if result is not None:
-                return result  # Retourner True si le mot est trouvé dans la concaténation actuelle
 
-        self.__find_all_iteration(word, ' '.join(words[1:]), regex)
+            result = search(regex, current_concatenation)
+
+            if result is not None:
+                return result  # Retourner Match si le mot est trouvé dans la concaténation actuelle
+
+        return self.__find_all_iteration(word, ' '.join(words[1:]), regex)
 
 
 
@@ -121,7 +123,6 @@ class Find:
             sentenceStr.str_ = ' '.join(u)
 
         result = self.__find_all_iteration(wordStr.str_, sentenceStr.str_, regex)
-        #result = search(regex, sentenceStr.str_)
 
         if result is None:
             purge()
@@ -135,6 +136,5 @@ class Find:
         if len(result.group()) == x:
             return False
 
-        if result is not None:
-            purge()
-            return True
+        purge()
+        return True
