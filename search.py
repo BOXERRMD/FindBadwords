@@ -17,11 +17,12 @@ class Find:
         for i in ascii_lowercase:
             self.__alphabet_avec_variantes[i] = self.__trouver_variantes_de_lettre(i)
 
+        self.__in_word: bool
 
 
     def __trouver_variantes_de_lettre(self, base_char: str) -> list:
         """
-        Trouves des variantes d'une lettre et ajoute la ponctuation et les caractères digitales
+        Trouves des variantes d'une lettre et ajoute la ponctuation et les caractères digitaux
         :param base_char:
         :return:
         """
@@ -54,9 +55,21 @@ class Find:
         for i in mot:
             correspondances.append(self.__alphabet_avec_variantes[i])
 
-        pattern = r'\b' + r''.join([rf"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances]) + r'\b'
+        pattern = r''.join([rf"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances])
 
-        return compile(pattern)
+        return compile(self.__modifier_pattern(pattern))
+
+    def __modifier_pattern(self, pattern) -> str:
+        """
+        Modifie le modèle avec les choix de l'utilisateur
+        :param pattern: le modèle de base construit par __recherche_regex
+        :return: le modèle
+        """
+        if not self.in_word:
+            pattern = r'\b' + pattern + r'\b'
+
+        return pattern
+
 
     def __check_types(self, arg) -> Str_:
         """
@@ -103,22 +116,24 @@ class Find:
 
 
 
-    def find_Badwords(self, word: str, sentence: str, advanced: bool = True) -> bool:
+    def find_Badwords(self, word: str, sentence: str, linebreak: bool = True, in_word: bool = False) -> bool:
         """
         Search any configuration of word in the sentence
         :param word: a simple word write in LATIN (not string digit) EX : ``ass`` not ``a*s``
         :param sentence: the sentence who the word is find (or not)
-        :param advanced: Allow space and \\n replaced by ''
+        :param linebreak: Replace \\n by space
+        :param in_word: Allow research word in another word
         :return: ``True`` if the word is find, else ``False``
         """
 
         wordStr = self.__check_types(word)
         sentenceStr = Str_(sentence)
-        advancedBool = Bool_(advanced)
+        linebreakBool = Bool_(linebreak)
+        self.in_word = Bool_(in_word)
 
         regex = self.__recherche_regex(wordStr.str_)
 
-        if advancedBool:
+        if linebreakBool:
             u = sentenceStr.str_.split('\n')
             sentenceStr.str_ = ' '.join(u)
 
@@ -128,11 +143,13 @@ class Find:
             purge()
             return False
 
+        # si la phrase ne contient que des caractères spéciaux
         x = 0
         for i in result.group():
             if i in special_caracteres:
                 x += 1
 
+        # on ne fait rien
         if len(result.group()) == x:
             return False
 
