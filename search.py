@@ -104,6 +104,8 @@ class Find:
         current_concatenation = ""
 
         for i in range(len(words)):
+            if not self.__unique_special_caracters(words[i]):
+                continue
             current_concatenation += words[i]  # Ajouter le mot actuel à la concaténation
 
             result = search(regex, current_concatenation)
@@ -113,6 +115,12 @@ class Find:
 
         return self.__find_all_iteration(word, ' '.join(words[1:]), regex)
 
+
+    def __unique_special_caracters(self, word: str):
+        for i in word:
+            if i not in special_caracteres:
+                return True
+        return False
 
 
 
