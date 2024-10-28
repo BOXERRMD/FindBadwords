@@ -17,7 +17,7 @@ class Find:
         for i in ascii_lowercase:
             self.__alphabet_avec_variantes[i] = self.__trouver_variantes_de_lettre(i)
 
-        self.__in_word: bool
+        self.__in_word: Bool_ = Bool_(False)
 
 
     def __trouver_variantes_de_lettre(self, base_char: str) -> list:
@@ -65,7 +65,7 @@ class Find:
         :param pattern: le modèle de base construit par __recherche_regex
         :return: le modèle
         """
-        if not self.in_word:
+        if not self.__in_word:
             pattern = r'\b' + pattern + r'\b'
 
         return pattern
@@ -111,6 +111,8 @@ class Find:
             result = search(regex, current_concatenation)
 
             if result is not None:
+                print(result.string)
+                print(result.group())
                 return result  # Retourner Match si le mot est trouvé dans la concaténation actuelle
 
         return self.__find_all_iteration(word, ' '.join(words[1:]), regex)
@@ -137,7 +139,7 @@ class Find:
         wordStr = self.__check_types(word)
         sentenceStr = Str_(sentence)
         linebreakBool = Bool_(linebreak)
-        self.in_word = Bool_(in_word)
+        self.__in_word.bool_ = in_word
 
         regex = self.__recherche_regex(wordStr.str_)
 
