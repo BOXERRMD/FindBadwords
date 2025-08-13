@@ -3,7 +3,7 @@ from string import punctuation, ascii_lowercase, digits
 from unicodedata import name
 from immutableType import Str_, Bool_, StrError
 
-special_caracteres = punctuation+digits
+special_caracteres = punctuation+digits+' '
 
 class Find:
 
@@ -14,34 +14,36 @@ class Find:
         """
 
         self.__alphabet_avec_variantes = {}
-        for i in ascii_lowercase:
-            self.__alphabet_avec_variantes[i] = self.__trouver_variantes_de_lettre(i)
+        self.__trouver_variantes_de_lettre()
 
         self.__in_word: Bool_ = Bool_(False)
 
 
-    def __trouver_variantes_de_lettre(self, base_char: str) -> list:
+    def __trouver_variantes_de_lettre(self) -> None:
         """
-        Trouves des variantes d'une lettre et ajoute la ponctuation et les caractères digitaux
-        :param base_char:
+        Trouves des variantes de toutes les lettres et ajoute la ponctuation et les caractères digitaux
         :return:
         """
-        variantes = []
+        pattern = compile(r"\b([a-zA-Z])\b")  # Modèle pour trouver les lettres de base
+        l = list(special_caracteres)
         for codepoint in range(0x110000):  # Limite de l'espace Unicode
             char = chr(codepoint)
             try:
                 # Vérifier si le nom du caractère contient la lettre de base "a"
                 unicode_name = name(char)
 
-                result = search(r"\b["+f"{base_char.lower()}{base_char.upper()}"+r"]\b", unicode_name)
+                result = search(pattern, unicode_name)
 
                 if result is not None:
-                    variantes.append(char)
+                    result_group1 = result.group(1).lower()  # Convertir en minuscule
+                    if result_group1 not in self.__alphabet_avec_variantes:
+                        self.__alphabet_avec_variantes[result_group1] = [char]
+                    else:
+                        self.__alphabet_avec_variantes[result_group1].append(char)
 
             except ValueError:
                 # Ignorer les caractères qui n'ont pas de nom Unicode
                 pass
-        return variantes + [i for i in special_caracteres]
 
 
     def __recherche_regex(self, mot: str) -> Pattern:
@@ -55,7 +57,8 @@ class Find:
         for i in mot:
             correspondances.append(self.__alphabet_avec_variantes[i])
 
-        pattern = r''.join([rf"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances])
+        pattern = r''.join([rf"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances])  # ne marche pas. prend toujours 'on pour "con"
+
 
         return compile(self.__modifier_pattern(pattern))
 
@@ -66,29 +69,14 @@ class Find:
         :return: le modèle
         """
         if not self.__in_word:
-            pattern = r'\b' + pattern + r'\b'
+            pattern = rf"\b{pattern}\b"
+            print(pattern)
 
         return pattern
 
 
-    def __check_types(self, arg) -> Str_:
-        """
-        Regarde si l'argument est un str ou non (les booléens sont considéré comme des châines de caractère
-        :param arg: l'argument
-        :return: Str_ type immuable
-        :raise: StrError si l'argument n'est pas une châine de caractère
-        """
-        try:
 
-            int(arg)
-
-        except:
-            return Str_(str(arg))
-
-        raise StrError(arg)
-
-
-    def __find_all_iteration(self, word: str, sentence: str, regex: Pattern):
+    def __find_all_iteration(self, sentence: str, regex: Pattern):
         """
         Concatène chaque mot un à un pour vérifier le match
         :param word:
@@ -100,29 +88,9 @@ class Find:
         if sentence == '':
             return None # Retourner None si le mot n'est pas trouvé dans la phrase entière
 
-        words = sentence.split()  # Diviser la phrase en mots
-        current_concatenation = ""
+        result = search(regex, sentence)
 
-        for i in range(len(words)):
-            if not self.__unique_special_caracters(words[i]):
-                continue
-            current_concatenation += words[i]  # Ajouter le mot actuel à la concaténation
-
-            result = search(regex, current_concatenation)
-
-            if result is not None:
-                print(result.string)
-                print(result.group())
-                return result  # Retourner Match si le mot est trouvé dans la concaténation actuelle
-
-        return self.__find_all_iteration(word, ' '.join(words[1:]), regex)
-
-
-    def __unique_special_caracters(self, word: str):
-        for i in word:
-            if i not in special_caracteres:
-                return True
-        return False
+        print(result)
 
 
 
@@ -136,7 +104,7 @@ class Find:
         :return: ``True`` if the word is find, else ``False``
         """
 
-        wordStr = self.__check_types(word)
+        wordStr = Str_(word)
         sentenceStr = Str_(sentence)
         linebreakBool = Bool_(linebreak)
         self.__in_word.bool_ = in_word
@@ -147,7 +115,7 @@ class Find:
             u = sentenceStr.str_.split('\n')
             sentenceStr.str_ = ' '.join(u)
 
-        result = self.__find_all_iteration(wordStr.str_, sentenceStr.str_, regex)
+        result = self.__find_all_iteration(sentenceStr.str_, regex)
 
         if result is None:
             purge()
