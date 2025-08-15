@@ -1,16 +1,12 @@
-from re import search, compile, purge, Pattern
-from string import punctuation, ascii_lowercase, digits
+from regex import search, compile, purge, Pattern, escape, findall
 from unicodedata import name
-from immutableType import Str_, Bool_, StrError
-
-special_caracteres = punctuation+digits+' '
+from immutableType import Str_, Bool_, Int_
 
 class Find:
 
     def __init__(self):
         """
         Init all characters.
-        THE INITIALISATION IS VERY SLOW !
         """
 
         self.__alphabet_avec_variantes = {}
@@ -25,7 +21,6 @@ class Find:
         :return:
         """
         pattern = compile(r"\b([a-zA-Z])\b")  # Modèle pour trouver les lettres de base
-        l = list(special_caracteres)
         for codepoint in range(0x110000):  # Limite de l'espace Unicode
             char = chr(codepoint)
             try:
@@ -36,6 +31,7 @@ class Find:
 
                 if result is not None:
                     result_group1 = result.group(1).lower()  # Convertir en minuscule
+                    char = escape(char)
                     if result_group1 not in self.__alphabet_avec_variantes:
                         self.__alphabet_avec_variantes[result_group1] = [char]
                     else:
@@ -57,9 +53,8 @@ class Find:
         for i in mot:
             correspondances.append(self.__alphabet_avec_variantes[i])
 
-        pattern = r''.join([rf"[{''.join(sous_liste)}]+[{special_caracteres}]*" for sous_liste in correspondances])  # ne marche pas. prend toujours 'on pour "con"
-
-
+        pattern = r''.join([r"[^\p{L}]*(?:" + rf"([{''.join(sous_liste)}])+?|" + r"[^\p{L}]+?)[^\p{L}]*" for sous_liste in correspondances])  # ne marche pas. prend toujours 'on pour "con"
+        print(pattern)
         return compile(self.__modifier_pattern(pattern))
 
     def __modifier_pattern(self, pattern) -> str:
@@ -69,67 +64,61 @@ class Find:
         :return: le modèle
         """
         if not self.__in_word:
-            pattern = rf"\b{pattern}\b"
-            print(pattern)
+            pattern = rf"\b(?:{pattern})\b"
 
         return pattern
 
 
 
-    def __find_all_iteration(self, sentence: str, regex: Pattern):
+    def __find_all_iteration(self, word: str,  sentence: str, regex: Pattern, sensitive: int) -> bool:
         """
-        Concatène chaque mot un à un pour vérifier le match
+        Concatène chaque mot un à un pour vérifier le match.
         :param word:
         :param sentence:
         :param regex:
         :return:
         """
 
-        if sentence == '':
+        if not sentence:
             return None # Retourner None si le mot n'est pas trouvé dans la phrase entière
 
-        result = search(regex, sentence)
+        result = findall(regex, sentence)
 
-        print(result)
+        if not result:
+            return False
+
+        # calcule le pourcentage de correspondance
+        for match in result:
+            p = 100
+            for i in match:
+                if not i:
+                    p -= 100 / len(match)
+
+            if p < sensitive:
+                return False
+
+        return True  # Retourner True si le pourcentage est supérieur à la sensibilité
 
 
 
-    def find_Badwords(self, word: str, sentence: str, linebreak: bool = True, in_word: bool = False) -> bool:
+    def find_Badwords(self, word: str, sentence: str, in_word: bool = False, sensitive: int = 40) -> bool:
         """
         Search any configuration of word in the sentence
         :param word: a simple word write in LATIN (not string digit) EX : ``ass`` not ``a*s``
         :param sentence: the sentence who the word is find (or not)
-        :param linebreak: Replace \\n by space
+        :param sensitive: the sensitivity of the search, from 0 to 100, default is 40
         :param in_word: Allow research word in another word
         :return: ``True`` if the word is find, else ``False``
         """
 
         wordStr = Str_(word)
         sentenceStr = Str_(sentence)
-        linebreakBool = Bool_(linebreak)
+        sensitiveInt = Int_(sensitive)
         self.__in_word.bool_ = in_word
 
         regex = self.__recherche_regex(wordStr.str_)
 
-        if linebreakBool:
-            u = sentenceStr.str_.split('\n')
-            sentenceStr.str_ = ' '.join(u)
-
-        result = self.__find_all_iteration(sentenceStr.str_, regex)
-
-        if result is None:
-            purge()
-            return False
-
-        # si la phrase ne contient que des caractères spéciaux
-        x = 0
-        for i in result.group():
-            if i in special_caracteres:
-                x += 1
-
-        # on ne fait rien
-        if len(result.group()) == x:
-            return False
+        result = self.__find_all_iteration(wordStr.str_, sentenceStr.str_, regex, sensitiveInt.int_)
 
         purge()
-        return True
+        return result
