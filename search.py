@@ -54,7 +54,6 @@ class Find:
             correspondances.append(self.__alphabet_avec_variantes[i])
 
         pattern = r''.join([r"[^\p{L}]*(?:" + rf"([{''.join(sous_liste)}])+?|" + r"[^\p{L}]+?)[^\p{L}]*" for sous_liste in correspondances])  # ne marche pas. prend toujours 'on pour "con"
-        print(pattern)
         return compile(self.__modifier_pattern(pattern))
 
     def __modifier_pattern(self, pattern) -> str:
